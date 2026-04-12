@@ -18,6 +18,7 @@
 - Interested in exploring things I haven't spent much time with, especially records considered pinnacles of their form
 - Not focused on new releases
 - Don't frame recommendations by "mood" — just whether something is genuinely great and worth my time
+- Listens to full albums at a time — don't call out individual tracks
 
 ## Recommendations log
 See `recommendations.md`
