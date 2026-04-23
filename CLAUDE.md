@@ -20,5 +20,5 @@
 - Don't frame recommendations by "mood" — just whether something is genuinely great and worth my time
 - Listens to full albums at a time — don't call out individual tracks
 
-## Recommendations log
+## Listening log
 See `recommendations.md`
