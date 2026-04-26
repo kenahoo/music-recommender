@@ -13,6 +13,7 @@
 | 2026-04-12 | Don Caballero | *What Burns Never Returns* (1998) | Quintessential math rock — Damon Che's drumming is compositional, intricate, constantly shifting; instrumental | Pending |
 | 2026-04-12 | Tortoise | *TNT* (1998) | Post-rock/math rock with jazz inflections — vibraphone, dub, krautrock rhythms; Bad Plus adjacency | Already a fan |
 | 2026-04-12 | Battles | *Mirrored* (2007) | Apex of math rock form — hyper-precise, layered, uses studio as instrument; denser and more visceral | Pending |
+| 2026-04-19 | Scriabin | *Piano Sonata No. 5* (1907) | Gateway to Scriabin's late style — single movement, 8 minutes, pivotal bridge between his Romantic and mystical periods; connects to Prokofiev/Mussorgsky interest | Pending |
 
 ## Want to listen to
 
