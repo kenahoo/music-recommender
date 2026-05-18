@@ -1,0 +1,4 @@
+app_password      = "choose-a-strong-password"
+anthropic_api_key = "sk-ant-..."
+github_token      = "github_pat_..."
+github_repo       = "kenahoo/music-recommender"

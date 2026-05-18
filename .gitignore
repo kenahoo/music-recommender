@@ -1,0 +1,13 @@
+.env
+function.zip
+lambda/node_modules/
+.idea/
+*.iml
+
+# Terraform
+terraform/.terraform/
+terraform/terraform.tfstate
+terraform/terraform.tfstate.backup
+terraform/terraform.tfvars
+terraform/function.zip
+terraform/.terraform.lock.hcl

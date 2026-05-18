@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Music Advisor</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: system-ui, sans-serif; background: #1a1a1a; color: #e0e0e0; height: 100vh; display: flex; flex-direction: column; }
+
+#auth-overlay {
+  position: fixed; inset: 0; background: #1a1a1a;
+  display: flex; align-items: center; justify-content: center; z-index: 100;
+}
+#auth-box { background: #2a2a2a; padding: 2rem; border-radius: 8px; width: 300px; }
+#auth-box h2 { margin-bottom: 1rem; }
+#auth-box input { width: 100%; padding: 0.5rem; background: #3a3a3a; border: 1px solid #555; color: #e0e0e0; border-radius: 4px; margin-bottom: 0.75rem; font-size: 1rem; }
+#auth-box button { width: 100%; padding: 0.5rem; background: #4a90d9; border: none; color: white; border-radius: 4px; cursor: pointer; font-size: 1rem; }
+#auth-error { color: #ff6b6b; font-size: 0.85rem; margin-top: 0.5rem; display: none; }
+
+#app { display: none; flex-direction: column; height: 100vh; }
+header { padding: 1rem 1.5rem; background: #2a2a2a; border-bottom: 1px solid #3a3a3a; display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; }
+header h1 { font-size: 1.1rem; }
+#log-btn { padding: 0.4rem 0.9rem; background: #2d6a4f; border: none; color: white; border-radius: 4px; cursor: pointer; font-size: 0.85rem; }
+#log-btn:hover { background: #3a8a65; }
+
+#messages { flex: 1; overflow-y: auto; padding: 1.5rem; display: flex; flex-direction: column; gap: 1rem; }
+.message { max-width: 80%; padding: 0.75rem 1rem; border-radius: 8px; line-height: 1.5; white-space: pre-wrap; word-break: break-word; }
+.user { background: #2d4a6a; align-self: flex-end; }
+.assistant { background: #2a2a2a; border: 1px solid #3a3a3a; align-self: flex-start; }
+.thinking { color: #888; font-style: italic; }
+
+#input-area { padding: 1rem 1.5rem; background: #2a2a2a; border-top: 1px solid #3a3a3a; display: flex; gap: 0.5rem; flex-shrink: 0; }
+#input { flex: 1; padding: 0.6rem; background: #3a3a3a; border: 1px solid #555; color: #e0e0e0; border-radius: 4px; resize: none; font-family: inherit; font-size: 0.95rem; }
+#send { padding: 0.6rem 1.2rem; background: #4a90d9; border: none; color: white; border-radius: 4px; cursor: pointer; font-size: 0.95rem; }
+#send:disabled { opacity: 0.5; cursor: default; }
+
+#modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.7); display: none; align-items: center; justify-content: center; z-index: 50; }
+#modal-overlay.show { display: flex; }
+#modal { background: #2a2a2a; padding: 1.5rem; border-radius: 8px; width: 500px; max-width: 95vw; }
+#modal h2 { margin-bottom: 1rem; font-size: 1rem; }
+.field { margin-bottom: 0.75rem; }
+.field label { display: block; font-size: 0.8rem; color: #aaa; margin-bottom: 0.3rem; }
+.field input, .field textarea, .field select {
+  width: 100%; padding: 0.5rem; background: #3a3a3a; border: 1px solid #555;
+  color: #e0e0e0; border-radius: 4px; font-family: inherit; font-size: 0.95rem;
+}
+.modal-actions { display: flex; gap: 0.5rem; justify-content: flex-end; margin-top: 1rem; }
+.modal-actions button { padding: 0.5rem 1rem; border: none; border-radius: 4px; cursor: pointer; font-size: 0.9rem; }
+#cancel-btn { background: #444; color: #e0e0e0; }
+#commit-btn { background: #2d6a4f; color: white; }
+#commit-btn:disabled { opacity: 0.5; cursor: default; }
+#commit-status { font-size: 0.85rem; margin-top: 0.5rem; min-height: 1.2em; }
+.status-ok { color: #52b788; }
+.status-err { color: #ff6b6b; }
+</style>
+</head>
+<body>
+
+<div id="auth-overlay">
+  <div id="auth-box">
+    <h2>Music Advisor</h2>
+    <input type="password" id="password-input" placeholder="Password" autocomplete="current-password" />
+    <button id="auth-btn">Enter</button>
+    <div id="auth-error">Incorrect password</div>
+  </div>
+</div>
+
+<div id="app">
+  <header>
+    <h1>Music Advisor</h1>
+    <button id="log-btn">+ Log Recommendation</button>
+  </header>
+  <div id="messages"></div>
+  <div id="input-area">
+    <textarea id="input" rows="2" placeholder="Ask about music... (Enter to send, Shift+Enter for newline)"></textarea>
+    <button id="send">Send</button>
+  </div>
+</div>
+
+<div id="modal-overlay">
+  <div id="modal">
+    <h2>Log Recommendation</h2>
+    <div class="field"><label>Date</label><input type="text" id="f-date" /></div>
+    <div class="field"><label>Artist</label><input type="text" id="f-artist" /></div>
+    <div class="field"><label>Album</label><input type="text" id="f-album" /></div>
+    <div class="field"><label>Why recommended</label><textarea id="f-why" rows="2"></textarea></div>
+    <div class="field">
+      <label>Verdict</label>
+      <input type="text" id="f-verdict" placeholder="Pending, Favorable, Good, etc." />
+    </div>
+    <div id="commit-status"></div>
+    <div class="modal-actions">
+      <button id="cancel-btn">Cancel</button>
+      <button id="commit-btn">Commit to Repo</button>
+    </div>
+  </div>
+</div>
+
+<script>
+let password = '';
+let messages = [];
+const today = new Date().toISOString().slice(0, 10);
+
+// Auth
+document.getElementById('auth-btn').addEventListener('click', tryAuth);
+document.getElementById('password-input').addEventListener('keydown', e => {
+  if (e.key === 'Enter') tryAuth();
+});
+
+async function tryAuth() {
+  const pw = document.getElementById('password-input').value;
+  const res = await fetch('/api/chat', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ password: pw, messages: [{ role: 'user', content: 'hi' }] })
+  });
+  if (res.ok) {
+    password = pw;
+    sessionStorage.setItem('pw', pw);
+    document.getElementById('auth-overlay').style.display = 'none';
+    document.getElementById('app').style.display = 'flex';
+  } else {
+    document.getElementById('auth-error').style.display = 'block';
+  }
+}
+
+// Auto-login if password stored in session
+const stored = sessionStorage.getItem('pw');
+if (stored) {
+  document.getElementById('password-input').value = stored;
+  tryAuth();
+}
+
+// Chat
+document.getElementById('send').addEventListener('click', sendMessage);
+document.getElementById('input').addEventListener('keydown', e => {
+  if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); }
+});
+
+async function sendMessage() {
+  const input = document.getElementById('input');
+  const text = input.value.trim();
+  if (!text || document.getElementById('send').disabled) return;
+  input.value = '';
+
+  messages.push({ role: 'user', content: text });
+  renderMessages();
+  document.getElementById('send').disabled = true;
+
+  // Thinking placeholder
+  const thinkingId = 'thinking-' + Date.now();
+  const el = document.getElementById('messages');
+  el.insertAdjacentHTML('beforeend',
+    `<div class="message assistant thinking" id="${thinkingId}">...</div>`);
+  el.scrollTop = el.scrollHeight;
+
+  try {
+    const res = await fetch('/api/chat', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ password, messages })
+    });
+    const data = await res.json();
+    document.getElementById(thinkingId)?.remove();
+    messages.push({ role: 'assistant', content: data.content });
+    renderMessages();
+  } catch (err) {
+    document.getElementById(thinkingId)?.remove();
+    messages.push({ role: 'assistant', content: '(Error — please try again)' });
+    renderMessages();
+  }
+  document.getElementById('send').disabled = false;
+  document.getElementById('input').focus();
+}
+
+function renderMessages() {
+  const el = document.getElementById('messages');
+  el.innerHTML = messages.map(m =>
+    `<div class="message ${m.role}">${escHtml(m.content)}</div>`
+  ).join('');
+  el.scrollTop = el.scrollHeight;
+}
+
+function escHtml(s) {
+  return s
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;');
+}
+
+// Log modal
+document.getElementById('log-btn').addEventListener('click', openModal);
+document.getElementById('cancel-btn').addEventListener('click', closeModal);
+document.getElementById('modal-overlay').addEventListener('click', e => {
+  if (e.target === document.getElementById('modal-overlay')) closeModal();
+});
+
+function openModal() {
+  document.getElementById('f-date').value = today;
+  document.getElementById('f-artist').value = '';
+  document.getElementById('f-album').value = '';
+  document.getElementById('f-why').value = '';
+  document.getElementById('f-verdict').value = 'Pending';
+  document.getElementById('commit-status').textContent = '';
+  document.getElementById('commit-status').className = '';
+  document.getElementById('commit-btn').disabled = false;
+  document.getElementById('modal-overlay').classList.add('show');
+  setTimeout(() => document.getElementById('f-artist').focus(), 50);
+}
+
+function closeModal() {
+  document.getElementById('modal-overlay').classList.remove('show');
+}
+
+document.getElementById('commit-btn').addEventListener('click', async () => {
+  const date   = document.getElementById('f-date').value.trim();
+  const artist = document.getElementById('f-artist').value.trim();
+  const album  = document.getElementById('f-album').value.trim();
+  const why    = document.getElementById('f-why').value.trim();
+  const verdict = document.getElementById('f-verdict').value.trim() || 'Pending';
+
+  if (!artist || !album) {
+    document.getElementById('commit-status').textContent = 'Artist and Album are required.';
+    document.getElementById('commit-status').className = 'status-err';
+    return;
+  }
+
+  const newRow = `| ${date} | ${artist} | *${album}* | ${why} | ${verdict} |`;
+  const status = document.getElementById('commit-status');
+  const btn = document.getElementById('commit-btn');
+  status.textContent = 'Committing...';
+  status.className = '';
+  btn.disabled = true;
+
+  const res = await fetch('/api/commit', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      password,
+      newRow,
+      commitMessage: `Log: ${artist} — ${album}`
+    })
+  });
+
+  if (res.ok) {
+    status.textContent = 'Committed!';
+    status.className = 'status-ok';
+    setTimeout(closeModal, 800);
+  } else {
+    const data = await res.json().catch(() => ({}));
+    status.textContent = 'Error: ' + (data.error || 'commit failed');
+    status.className = 'status-err';
+    btn.disabled = false;
+  }
+});
+</script>
+</body>
+</html>
