@@ -69,6 +69,14 @@ export const handler = async (event) => {
     return { statusCode: 200, headers: { 'Content-Type': 'text/html' }, body: HTML };
   }
 
+  if (method === 'POST' && path === '/api/auth') {
+    let b;
+    try { b = parseBody(event); } catch { return json(400, { error: 'Invalid JSON' }); }
+    return b.password === process.env.APP_PASSWORD
+      ? json(200, { ok: true })
+      : json(401, { error: 'Unauthorized' });
+  }
+
   let body;
   try {
     body = parseBody(event);
@@ -81,21 +89,26 @@ export const handler = async (event) => {
   }
 
   if (method === 'POST' && path === '/api/chat') {
-    const [claudeMd, recsMd] = await Promise.all([
-      getFile('CLAUDE.md'),
-      getFile('recommendations.md'),
-    ]);
+    try {
+      const [claudeMd, recsMd] = await Promise.all([
+        getFile('CLAUDE.md'),
+        getFile('recommendations.md'),
+      ]);
 
-    const systemPrompt = `${claudeMd.content}\n\n## Current Recommendations Log\n\n${recsMd.content}`;
+      const systemPrompt = `${claudeMd.content}\n\n## Current Recommendations Log\n\n${recsMd.content}`;
 
-    const response = await client.messages.create({
-      model: 'claude-sonnet-4-6',
-      max_tokens: 2048,
-      system: systemPrompt,
-      messages: body.messages,
-    });
+      const response = await client.messages.create({
+        model: 'claude-sonnet-4-6',
+        max_tokens: 2048,
+        system: systemPrompt,
+        messages: body.messages,
+      });
 
-    return json(200, { content: response.content[0].text });
+      return json(200, { content: response.content[0].text });
+    } catch (err) {
+      console.error('Chat error:', err.message);
+      return json(502, { error: err.message || 'Claude API error' });
+    }
   }
 
   if (method === 'POST' && path === '/api/commit') {

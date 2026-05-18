@@ -110,10 +110,10 @@ document.getElementById('password-input').addEventListener('keydown', e => {
 
 async function tryAuth() {
   const pw = document.getElementById('password-input').value;
-  const res = await fetch('/api/chat', {
+  const res = await fetch('/api/auth', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ password: pw, messages: [{ role: 'user', content: 'hi' }] })
+    body: JSON.stringify({ password: pw })
   });
   if (res.ok) {
     password = pw;
@@ -161,13 +161,17 @@ async function sendMessage() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ password, messages })
     });
-    const data = await res.json();
     document.getElementById(thinkingId)?.remove();
-    messages.push({ role: 'assistant', content: data.content });
+    const data = await res.json().catch(() => ({}));
+    if (res.ok) {
+      messages.push({ role: 'assistant', content: data.content });
+    } else {
+      messages.push({ role: 'assistant', content: `(Error: ${data.error || res.status})` });
+    }
     renderMessages();
   } catch (err) {
     document.getElementById(thinkingId)?.remove();
-    messages.push({ role: 'assistant', content: '(Error — please try again)' });
+    messages.push({ role: 'assistant', content: '(Network error — please try again)' });
     renderMessages();
   }
   document.getElementById('send').disabled = false;
