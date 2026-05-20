@@ -28,7 +28,9 @@ async function getFile(path) {
   };
 }
 
-async function commitFile(path, content, sha, message) {
+async function commitFile(path, content, message) {
+  // Re-fetch SHA at commit time to handle any delay between proposal and confirm
+  const { sha } = await getFile(path);
   const res = await fetch(`${GITHUB_API}/repos/${REPO}/contents/${path}`, {
     method: 'PUT',
     headers: { ...githubHeaders(), 'Content-Type': 'application/json' },
@@ -43,6 +45,26 @@ async function commitFile(path, content, sha, message) {
     const err = await res.json().catch(() => ({}));
     throw new Error(err.message || `GitHub write failed: ${res.status}`);
   }
+}
+
+function lineDiff(oldText, newText) {
+  const oldLines = oldText.split('\n');
+  const newLines = newText.split('\n');
+  const removed = new Set();
+  const added = new Set();
+
+  // Mark lines removed from old that aren't in new
+  for (let i = 0; i < oldLines.length; i++) {
+    if (!newLines.includes(oldLines[i])) removed.add(i);
+  }
+  const result = [];
+  for (let i = 0; i < oldLines.length; i++) {
+    if (removed.has(i)) result.push(`- ${oldLines[i]}`);
+  }
+  for (let i = 0; i < newLines.length; i++) {
+    if (!oldLines.includes(newLines[i])) result.push(`+ ${newLines[i]}`);
+  }
+  return result.length ? result.join('\n') : '(no textual diff detected)';
 }
 
 function parseBody(event) {
@@ -60,6 +82,27 @@ function json(statusCode, body) {
     body: JSON.stringify(body),
   };
 }
+
+const tools = [
+  {
+    name: 'propose_update',
+    description: 'Propose changes to recommendations.md. Call this when the user wants to update verdicts, add entries, or make any other edit. This does NOT commit immediately — the user will be shown the diff and asked to confirm before anything is saved.',
+    input_schema: {
+      type: 'object',
+      properties: {
+        new_content: {
+          type: 'string',
+          description: 'The complete proposed new content of recommendations.md',
+        },
+        commit_message: {
+          type: 'string',
+          description: 'A short git commit message describing the changes',
+        },
+      },
+      required: ['new_content', 'commit_message'],
+    },
+  },
+];
 
 export const handler = async (event) => {
   const path = event.rawPath || '/';
@@ -88,6 +131,17 @@ export const handler = async (event) => {
     return json(401, { error: 'Unauthorized' });
   }
 
+  if (method === 'POST' && path === '/api/commit') {
+    const { newContent, commitMessage } = body;
+    if (!newContent) return json(400, { error: 'newContent is required' });
+    try {
+      await commitFile('recommendations.md', newContent, commitMessage || 'Update recommendations');
+      return json(200, { success: true });
+    } catch (err) {
+      return json(502, { error: err.message });
+    }
+  }
+
   if (method === 'POST' && path === '/api/chat') {
     try {
       const [claudeMd, recsMd] = await Promise.all([
@@ -96,39 +150,47 @@ export const handler = async (event) => {
       ]);
 
       const systemPrompt = `${claudeMd.content}\n\n## Current Recommendations Log\n\n${recsMd.content}`;
+      const msgs = [...body.messages];
+      let pending = null;
 
-      const response = await client.messages.create({
-        model: 'claude-sonnet-4-6',
-        max_tokens: 2048,
-        system: systemPrompt,
-        messages: body.messages,
-      });
+      while (true) {
+        const response = await client.messages.create({
+          model: 'claude-sonnet-4-6',
+          max_tokens: 4096,
+          system: systemPrompt,
+          messages: msgs,
+          tools,
+        });
 
-      return json(200, { content: response.content[0].text });
+        if (response.stop_reason === 'tool_use') {
+          msgs.push({ role: 'assistant', content: response.content });
+          const results = [];
+
+          for (const block of response.content) {
+            if (block.type !== 'tool_use') continue;
+            if (block.name === 'propose_update') {
+              const diff = lineDiff(recsMd.content, block.input.new_content);
+              pending = {
+                newContent: block.input.new_content,
+                commitMessage: block.input.commit_message,
+              };
+              results.push({
+                type: 'tool_result',
+                tool_use_id: block.id,
+                content: `Diff:\n\`\`\`\n${diff}\n\`\`\`\nThe change is ready. Ask the user to confirm before committing.`,
+              });
+            }
+          }
+          msgs.push({ role: 'user', content: results });
+        } else {
+          const text = response.content.find(b => b.type === 'text');
+          return json(200, { content: text?.text || '', pending });
+        }
+      }
     } catch (err) {
       console.error('Chat error:', err.message);
       return json(502, { error: err.message || 'Claude API error' });
     }
-  }
-
-  if (method === 'POST' && path === '/api/commit') {
-    const { newRow, commitMessage } = body;
-    if (!newRow) return json(400, { error: 'newRow is required' });
-
-    const { content, sha } = await getFile('recommendations.md');
-
-    // Insert new row before the blank line that precedes "## Want to listen to",
-    // keeping it within the main recommendations table.
-    let updated;
-    const wantIdx = content.indexOf('\n\n## Want to listen to');
-    if (wantIdx !== -1) {
-      updated = content.slice(0, wantIdx) + '\n' + newRow + content.slice(wantIdx);
-    } else {
-      updated = content.trimEnd() + '\n' + newRow + '\n';
-    }
-
-    await commitFile('recommendations.md', updated, sha, commitMessage || `Log: ${newRow}`);
-    return json(200, { success: true });
   }
 
   return json(404, { error: 'Not found' });
