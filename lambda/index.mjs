@@ -173,6 +173,7 @@ export const handler = async (event) => {
               pending = {
                 newContent: block.input.new_content,
                 commitMessage: block.input.commit_message,
+                diff,
               };
               results.push({
                 type: 'tool_result',

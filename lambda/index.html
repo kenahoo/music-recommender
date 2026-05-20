@@ -39,12 +39,16 @@ header h1 { font-size: 1.1rem; }
 #send { padding: 0.6rem 1.2rem; background: #4a90d9; border: none; color: white; border-radius: 4px; cursor: pointer; font-size: 0.95rem; }
 #send:disabled { opacity: 0.5; cursor: default; }
 
-#pending-bar { display: none; padding: 0.75rem 1.5rem; background: #1e3a2f; border-top: 1px solid #2d6a4f; flex-shrink: 0; align-items: center; gap: 1rem; }
+#pending-bar { display: none; background: #1e3a2f; border-top: 1px solid #2d6a4f; flex-shrink: 0; flex-direction: column; }
 #pending-bar.show { display: flex; }
+#pending-header { padding: 0.6rem 1.5rem; display: flex; align-items: center; gap: 1rem; }
 #pending-bar span { flex: 1; font-size: 0.9rem; color: #a8d8b9; }
 #pending-bar button { padding: 0.4rem 0.9rem; border: none; border-radius: 4px; cursor: pointer; font-size: 0.85rem; }
 #confirm-btn { background: #2d6a4f; color: white; }
 #cancel-pending-btn { background: #444; color: #e0e0e0; }
+#pending-diff { margin: 0 1.5rem 0.75rem; background: #111; border-radius: 4px; padding: 0.6rem 0.75rem; font-family: monospace; font-size: 0.8rem; overflow-x: auto; white-space: pre; max-height: 12rem; overflow-y: auto; }
+#pending-diff .del { color: #ff6b6b; }
+#pending-diff .add { color: #52b788; }
 </style>
 </head>
 <body>
@@ -66,9 +70,12 @@ header h1 { font-size: 1.1rem; }
   </header>
   <div id="messages"></div>
   <div id="pending-bar">
-    <span id="pending-label"></span>
-    <button id="cancel-pending-btn">Cancel</button>
-    <button id="confirm-btn">Commit</button>
+    <div id="pending-header">
+      <span id="pending-label"></span>
+      <button id="cancel-pending-btn">Cancel</button>
+      <button id="confirm-btn">Commit</button>
+    </div>
+    <div id="pending-diff"></div>
   </div>
   <div id="input-area">
     <textarea id="input" rows="2" placeholder="Ask about music... (Enter to send, Shift+Enter for newline)"></textarea>
@@ -169,9 +176,16 @@ function setPending(p) {
   const bar = document.getElementById('pending-bar');
   if (p) {
     document.getElementById('pending-label').textContent = `Commit: "${p.commitMessage}"`;
+    const diffEl = document.getElementById('pending-diff');
+    diffEl.innerHTML = p.diff.split('\n').map(line => {
+      if (line.startsWith('+')) return `<span class="add">${escHtml(line)}</span>`;
+      if (line.startsWith('-')) return `<span class="del">${escHtml(line)}</span>`;
+      return escHtml(line);
+    }).join('\n');
     bar.classList.add('show');
   } else {
     bar.classList.remove('show');
+    document.getElementById('pending-diff').innerHTML = '';
   }
 }
 
