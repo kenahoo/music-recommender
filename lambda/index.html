@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Music Advisor</title>
+<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 <style>
 * { box-sizing: border-box; margin: 0; padding: 0; }
 body { font-family: system-ui, sans-serif; background: #1a1a1a; color: #e0e0e0; height: 100vh; display: flex; flex-direction: column; }
@@ -29,6 +30,11 @@ header h1 { font-size: 1.1rem; }
 .user { background: #2d4a6a; align-self: flex-end; }
 .assistant { background: #2a2a2a; border: 1px solid #3a3a3a; align-self: flex-start; }
 .thinking { color: #888; font-style: italic; }
+.assistant p { margin-bottom: 0.6em; }
+.assistant p:last-child { margin-bottom: 0; }
+.assistant ul, .assistant ol { margin: 0.4em 0 0.6em 1.4em; }
+.assistant li { margin-bottom: 0.2em; }
+.assistant h1, .assistant h2, .assistant h3 { margin: 0.6em 0 0.3em; }
 
 #input-area { padding: 1rem 1.5rem; background: #2a2a2a; border-top: 1px solid #3a3a3a; display: flex; gap: 0.5rem; flex-shrink: 0; }
 #input { flex: 1; padding: 0.6rem; background: #3a3a3a; border: 1px solid #555; color: #e0e0e0; border-radius: 4px; resize: none; font-family: inherit; font-size: 0.95rem; }
@@ -185,7 +191,7 @@ async function sendMessage() {
 function renderMessages() {
   const el = document.getElementById('messages');
   el.innerHTML = messages.map(m =>
-    `<div class="message ${m.role}">${escHtml(m.content)}</div>`
+    `<div class="message ${m.role}">${m.role === 'assistant' ? marked.parse(m.content) : escHtml(m.content)}</div>`
   ).join('');
   el.scrollTop = el.scrollHeight;
 }
