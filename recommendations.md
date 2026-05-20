@@ -9,8 +9,8 @@
 | 2026-03-21 | Nick Drake | *Bryter Layter* (1971) | Lush orchestral folk-pop, intricate fingerpicking, chamber-like arrangements — knows Pink Moon but not this | Good |
 | 2026-03-22 | Talking Heads | *Remain in Light* (1980) | African polyrhythm meets Eno production, dense interlocking grooves — knows the band but not this album | Great |
 | 2026-03-22 | Joni Mitchell | *Hejira* (1976) | Sparse, fretless-bass-driven, austere — knows Blue and Court and Spark well | Good (already knew it) |
-| 2026-03-22 | Fela Kuti | *Zombie* (1977) | Lagos afrobeat, direct influence on Remain in Light, politically charged | Pending |
-| 2026-04-12 | Don Caballero | *What Burns Never Returns* (1998) | Quintessential math rock — Damon Che's drumming is compositional, intricate, constantly shifting; instrumental | Pending |
+| 2026-03-22 | Fela Kuti | *Zombie* (1977) | Lagos afrobeat, direct influence on Remain in Light, politically charged | Already knew it well |
+| 2026-04-12 | Don Caballero | *What Burns Never Returns* (1998) | Quintessential math rock — Damon Che's drumming is compositional, intricate, constantly shifting; instrumental | Likes Don Caballero but prefers *American Don* |
 | 2026-04-12 | Tortoise | *TNT* (1998) | Post-rock/math rock with jazz inflections — vibraphone, dub, krautrock rhythms; Bad Plus adjacency | Already a fan |
 | 2026-04-12 | Battles | *Mirrored* (2007) | Apex of math rock form — hyper-precise, layered, uses studio as instrument; denser and more visceral | Pending |
 | 2026-04-19 | Scriabin | *Piano Sonata No. 5* (1907) | Gateway to Scriabin's late style — single movement, 8 minutes, pivotal bridge between his Romantic and mystical periods; connects to Prokofiev/Mussorgsky interest | Pending |
