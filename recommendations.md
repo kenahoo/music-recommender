@@ -24,3 +24,4 @@
 | 2026-05-03 | Angine de Poitrine | KEXP live session (2026) | Masked Quebec microtonal math rock duo; viral session — first exposure | Pretty great |
 | 2026-05-17 | Charles Mingus | *The Black Saint and the Sinner Lady* (1963) | Large-scale jazz composition, dense and maximalist | Very classic Mingus; cacophonous large ensemble, everything at once |
 | 2026-05-17 | Steve Reich | *Music for 18 Musicians* (1978) | Pinnacle of minimalist form — interlocking rhythmic cells, warm and hypnotic, direct influence on *Remain in Light*; not strict background minimalism but actively compositional | Pending |
+| 2026-06-20 | Can | *Tago Mago* (1971) | Pinnacle of krautrock — hypnotic locked-in grooves, drummer Jaki Liebefeld as compositional engine; direct influence on *Remain in Light*, connects to extended group improvisation (Grateful Dead) and drummer-as-composer angle (Miller, Don Caballero) | Pending |
