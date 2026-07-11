@@ -99,6 +99,17 @@ resource "aws_lambda_permission" "function_url" {
   function_url_auth_type = "NONE"
 }
 
+# As of October 2025, public function URLs also require lambda:InvokeFunction in
+# addition to lambda:InvokeFunctionUrl, or every request 403s. Ideally this would be
+# scoped with the lambda:InvokedViaFunctionUrl condition, but aws_lambda_permission
+# can't express that condition, so this grants InvokeFunction to all principals.
+resource "aws_lambda_permission" "function_invoke" {
+  statement_id  = "FunctionURLInvokeAllowPublicAccess"
+  action        = "lambda:InvokeFunction"
+  function_name = aws_lambda_function.app.function_name
+  principal     = "*"
+}
+
 # ── API Gateway ────────────────────────────────────────────────────────────────
 
 resource "aws_apigatewayv2_api" "app" {
