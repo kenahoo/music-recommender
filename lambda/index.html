@@ -87,6 +87,14 @@ header h1 { font-size: 1.1rem; }
 let password = '';
 let messages = [];
 let pendingCommit = null;
+let logGroupUrl = ''; // CloudWatch log group, provided by /api/auth
+
+// Builds an error message with a link to the logs. Prefers a per-request log
+// stream link (from the API), falling back to the whole log group.
+function errorText(detail, logUrl) {
+  const link = logUrl || logGroupUrl;
+  return `(Error: ${detail})` + (link ? ` — [view logs](${link})` : '');
+}
 
 // Auth
 document.getElementById('auth-btn').addEventListener('click', tryAuth);
@@ -104,6 +112,8 @@ async function tryAuth() {
   if (res.ok) {
     password = pw;
     sessionStorage.setItem('pw', pw);
+    const data = await res.json().catch(() => ({}));
+    logGroupUrl = data.logGroupUrl || '';
     document.getElementById('auth-overlay').style.display = 'none';
     document.getElementById('app').style.display = 'flex';
   } else {
@@ -151,12 +161,12 @@ async function sendMessage() {
       messages.push({ role: 'assistant', content: data.content });
       setPending(data.pending || null);
     } else {
-      messages.push({ role: 'assistant', content: `(Error: ${data.error || res.status})` });
+      messages.push({ role: 'assistant', content: errorText(data.error || `HTTP ${res.status}`, data.logUrl) });
     }
     renderMessages();
   } catch (err) {
     document.getElementById(thinkingId)?.remove();
-    messages.push({ role: 'assistant', content: '(Network error — please try again)' });
+    messages.push({ role: 'assistant', content: errorText('Network error — please try again') });
     renderMessages();
   }
   document.getElementById('send').disabled = false;
@@ -166,7 +176,9 @@ async function sendMessage() {
 function renderMessages() {
   const el = document.getElementById('messages');
   el.innerHTML = messages.map(m =>
-    `<div class="message ${m.role}">${m.role === 'assistant' ? marked.parse(m.content) : escHtml(m.content)}</div>`
+    `<div class="message ${m.role}">${m.role === 'assistant'
+      ? marked.parse(m.content).replace(/<a /g, '<a target="_blank" rel="noopener" ')
+      : escHtml(m.content)}</div>`
   ).join('');
   el.scrollTop = el.scrollHeight;
 }
@@ -199,7 +211,7 @@ document.getElementById('confirm-btn').addEventListener('click', async () => {
     body: JSON.stringify({ password, newContent, commitMessage })
   });
   const data = await res.json().catch(() => ({}));
-  messages.push({ role: 'assistant', content: res.ok ? 'Committed.' : `Commit failed: ${data.error || res.status}` });
+  messages.push({ role: 'assistant', content: res.ok ? 'Committed.' : errorText(`Commit failed: ${data.error || res.status}`, data.logUrl) });
   renderMessages();
 });
 

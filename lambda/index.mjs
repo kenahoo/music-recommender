@@ -8,6 +8,29 @@ const GITHUB_API = 'https://api.github.com';
 const REPO = process.env.GITHUB_REPO;
 const BRANCH = process.env.GITHUB_BRANCH || 'main';
 
+// ── CloudWatch log links ──────────────────────────────────────────────────────
+// CloudWatch console tokens are URL-encoded, then each '%' is replaced with '$25'.
+const cwEnc = (s) => encodeURIComponent(s).replace(/%/g, '$25');
+
+function cwBase() {
+  const region = process.env.AWS_REGION || 'us-east-1';
+  return `https://${region}.console.aws.amazon.com/cloudwatch/home?region=${region}#logsV2:log-groups/log-group/`;
+}
+
+// Deep link to the exact log stream for this invocation (used in error responses).
+function streamLogUrl(context) {
+  const group = context?.logGroupName || `/aws/lambda/${process.env.AWS_LAMBDA_FUNCTION_NAME}`;
+  let url = cwBase() + cwEnc(group);
+  if (context?.logStreamName) url += `/log-events/${cwEnc(context.logStreamName)}`;
+  return url;
+}
+
+// Link to the whole log group, injected into the page so the frontend can link to
+// logs even for gateway/timeout errors that never reach this handler.
+function groupLogUrl() {
+  return cwBase() + cwEnc(`/aws/lambda/${process.env.AWS_LAMBDA_FUNCTION_NAME}`);
+}
+
 function githubHeaders() {
   return {
     Authorization: `token ${process.env.GITHUB_TOKEN}`,
@@ -104,7 +127,7 @@ const tools = [
   },
 ];
 
-export const handler = async (event) => {
+export const handler = async (event, context) => {
   const path = event.rawPath || '/';
   const method = event.requestContext?.http?.method || 'GET';
 
@@ -116,7 +139,7 @@ export const handler = async (event) => {
     let b;
     try { b = parseBody(event); } catch { return json(400, { error: 'Invalid JSON' }); }
     return b.password === process.env.APP_PASSWORD
-      ? json(200, { ok: true })
+      ? json(200, { ok: true, logGroupUrl: groupLogUrl() })
       : json(401, { error: 'Unauthorized' });
   }
 
@@ -138,7 +161,7 @@ export const handler = async (event) => {
       await commitFile('recommendations.md', newContent, commitMessage || 'Update recommendations');
       return json(200, { success: true });
     } catch (err) {
-      return json(502, { error: err.message });
+      return json(502, { error: err.message, logUrl: streamLogUrl(context) });
     }
   }
 
@@ -183,7 +206,7 @@ export const handler = async (event) => {
       return json(200, { content, pending });
     } catch (err) {
       console.error('Chat error:', err.message);
-      return json(502, { error: err.message || 'Claude API error' });
+      return json(502, { error: err.message || 'Claude API error', logUrl: streamLogUrl(context) });
     }
   }
 
