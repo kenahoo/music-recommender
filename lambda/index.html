@@ -49,6 +49,9 @@ header h1 { font-size: 1.1rem; }
 #pending-diff { margin: 0 1.5rem 0.75rem; background: #111; border-radius: 4px; padding: 0.6rem 0.75rem; font-family: monospace; font-size: 0.8rem; overflow-x: auto; white-space: pre; max-height: 12rem; overflow-y: auto; }
 #pending-diff .del { color: #ff6b6b; }
 #pending-diff .add { color: #52b788; }
+#pending-bar.committed { border-top-color: #52b788; }
+#pending-bar.committed #pending-label { color: #7ee0a0; }
+#pending-bar.committed #confirm-btn, #pending-bar.committed #cancel-pending-btn { display: none; }
 </style>
 </head>
 <body>
@@ -186,7 +189,11 @@ function renderMessages() {
 function setPending(p) {
   pendingCommit = p;
   const bar = document.getElementById('pending-bar');
+  bar.classList.remove('committed');
   if (p) {
+    const confirmBtn = document.getElementById('confirm-btn');
+    confirmBtn.disabled = false;
+    confirmBtn.textContent = 'Commit';
     document.getElementById('pending-label').textContent = `Commit: "${p.commitMessage}"`;
     const diffEl = document.getElementById('pending-diff');
     diffEl.innerHTML = p.diff.split('\n').map(line => {
@@ -204,15 +211,27 @@ function setPending(p) {
 document.getElementById('confirm-btn').addEventListener('click', async () => {
   if (!pendingCommit) return;
   const { newContent, commitMessage } = pendingCommit;
-  setPending(null);
+  const confirmBtn = document.getElementById('confirm-btn');
+  confirmBtn.disabled = true;
+  confirmBtn.textContent = 'Committing…';
   const res = await fetch('/api/commit', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ password, newContent, commitMessage })
   });
   const data = await res.json().catch(() => ({}));
-  messages.push({ role: 'assistant', content: res.ok ? 'Committed.' : errorText(`Commit failed: ${data.error || res.status}`, data.logUrl) });
-  renderMessages();
+  if (res.ok) {
+    // Keep the diff visible and mark the bar committed instead of clearing it.
+    pendingCommit = null;
+    document.getElementById('pending-label').textContent = `✓ Committed: "${commitMessage}"`;
+    document.getElementById('pending-bar').classList.add('committed');
+  } else {
+    // Leave the pending bar intact so the user can retry.
+    confirmBtn.disabled = false;
+    confirmBtn.textContent = 'Commit';
+    messages.push({ role: 'assistant', content: errorText(`Commit failed: ${data.error || res.status}`, data.logUrl) });
+    renderMessages();
+  }
 });
 
 document.getElementById('cancel-pending-btn').addEventListener('click', () => {
