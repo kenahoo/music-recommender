@@ -150,44 +150,37 @@ export const handler = async (event) => {
       ]);
 
       const systemPrompt = `${claudeMd.content}\n\n## Current Recommendations Log\n\n${recsMd.content}`;
-      const msgs = [...body.messages];
+
+      const response = await client.messages.create({
+        model: 'claude-sonnet-4-6',
+        max_tokens: 4096,
+        system: systemPrompt,
+        messages: body.messages,
+        tools,
+      });
+
+      const text = response.content.find(b => b.type === 'text');
+      const toolBlock = response.content.find(
+        b => b.type === 'tool_use' && b.name === 'propose_update'
+      );
+
+      // When the model proposes an update we return the diff immediately rather
+      // than making a second Claude call for a confirmation message — the diff is
+      // shown in the pending bar, and the extra round-trip was the main cause of
+      // requests exceeding the timeout.
       let pending = null;
-
-      while (true) {
-        const response = await client.messages.create({
-          model: 'claude-sonnet-4-6',
-          max_tokens: 4096,
-          system: systemPrompt,
-          messages: msgs,
-          tools,
-        });
-
-        if (response.stop_reason === 'tool_use') {
-          msgs.push({ role: 'assistant', content: response.content });
-          const results = [];
-
-          for (const block of response.content) {
-            if (block.type !== 'tool_use') continue;
-            if (block.name === 'propose_update') {
-              const diff = lineDiff(recsMd.content, block.input.new_content);
-              pending = {
-                newContent: block.input.new_content,
-                commitMessage: block.input.commit_message,
-                diff,
-              };
-              results.push({
-                type: 'tool_result',
-                tool_use_id: block.id,
-                content: `Diff:\n\`\`\`\n${diff}\n\`\`\`\nThe change is ready. Ask the user to confirm before committing.`,
-              });
-            }
-          }
-          msgs.push({ role: 'user', content: results });
-        } else {
-          const text = response.content.find(b => b.type === 'text');
-          return json(200, { content: text?.text || '', pending });
-        }
+      if (toolBlock) {
+        pending = {
+          newContent: toolBlock.input.new_content,
+          commitMessage: toolBlock.input.commit_message,
+          diff: lineDiff(recsMd.content, toolBlock.input.new_content),
+        };
       }
+
+      const content = text?.text?.trim()
+        || (pending ? 'I’ve prepared the change below — review the diff and hit Commit to save it.' : '');
+
+      return json(200, { content, pending });
     } catch (err) {
       console.error('Chat error:', err.message);
       return json(502, { error: err.message || 'Claude API error' });
