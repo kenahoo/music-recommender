@@ -106,6 +106,12 @@ function json(statusCode, body) {
   };
 }
 
+const UPDATE_PROTOCOL = `## How updates work
+
+The "Current Recommendations Log" below is the live, saved contents of recommendations.md. Always trust it as the source of truth over anything earlier in the conversation.
+
+To log a listen, add an entry, change a verdict, or make ANY edit to the log, you MUST call the propose_update tool with the complete updated file. That is the only way the file can change. Never say you have logged, added, updated, saved, or committed anything unless you actually called propose_update in that same reply. After you call it, the user reviews the diff and confirms the commit — you never commit yourself. If a change you proposed earlier is not reflected in the log below, it was not saved; propose it again.`;
+
 const tools = [
   {
     name: 'propose_update',
@@ -172,7 +178,7 @@ export const handler = async (event, context) => {
         getFile('recommendations.md'),
       ]);
 
-      const systemPrompt = `${claudeMd.content}\n\n## Current Recommendations Log\n\n${recsMd.content}`;
+      const systemPrompt = `${claudeMd.content}\n\n${UPDATE_PROTOCOL}\n\n## Current Recommendations Log\n\n${recsMd.content}`;
 
       const response = await client.messages.create({
         model: 'claude-sonnet-4-6',

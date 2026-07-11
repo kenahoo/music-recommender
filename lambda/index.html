@@ -153,10 +153,21 @@ async function sendMessage() {
   el.scrollTop = el.scrollHeight;
 
   try {
+    // Only send real conversation turns to the model. UI-only notices (errors,
+    // "Commit cancelled.") are flagged `local` and excluded so they don't teach
+    // the model to narrate actions it didn't take. Coalesce consecutive same-role
+    // turns (e.g. two user messages after a filtered-out error) so roles alternate.
+    const payload = [];
+    for (const m of messages) {
+      if (m.local) continue;
+      const last = payload[payload.length - 1];
+      if (last && last.role === m.role) last.content += '\n\n' + m.content;
+      else payload.push({ role: m.role, content: m.content });
+    }
     const res = await fetch('/api/chat', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ password, messages })
+      body: JSON.stringify({ password, messages: payload })
     });
     document.getElementById(thinkingId)?.remove();
     const data = await res.json().catch(() => ({}));
@@ -164,12 +175,12 @@ async function sendMessage() {
       messages.push({ role: 'assistant', content: data.content });
       setPending(data.pending || null);
     } else {
-      messages.push({ role: 'assistant', content: errorText(data.error || `HTTP ${res.status}`, data.logUrl) });
+      messages.push({ role: 'assistant', content: errorText(data.error || `HTTP ${res.status}`, data.logUrl), local: true });
     }
     renderMessages();
   } catch (err) {
     document.getElementById(thinkingId)?.remove();
-    messages.push({ role: 'assistant', content: errorText('Network error — please try again') });
+    messages.push({ role: 'assistant', content: errorText('Network error — please try again'), local: true });
     renderMessages();
   }
   document.getElementById('send').disabled = false;
@@ -229,14 +240,14 @@ document.getElementById('confirm-btn').addEventListener('click', async () => {
     // Leave the pending bar intact so the user can retry.
     confirmBtn.disabled = false;
     confirmBtn.textContent = 'Commit';
-    messages.push({ role: 'assistant', content: errorText(`Commit failed: ${data.error || res.status}`, data.logUrl) });
+    messages.push({ role: 'assistant', content: errorText(`Commit failed: ${data.error || res.status}`, data.logUrl), local: true });
     renderMessages();
   }
 });
 
 document.getElementById('cancel-pending-btn').addEventListener('click', () => {
   setPending(null);
-  messages.push({ role: 'assistant', content: 'Commit cancelled.' });
+  messages.push({ role: 'assistant', content: 'Commit cancelled.', local: true });
   renderMessages();
 });
 
