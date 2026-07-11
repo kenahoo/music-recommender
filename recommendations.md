@@ -25,3 +25,8 @@
 | 2026-05-17 | Charles Mingus | *The Black Saint and the Sinner Lady* (1963) | Large-scale jazz composition, dense and maximalist | Very classic Mingus; cacophonous large ensemble, everything at once |
 | 2026-05-17 | Steve Reich | *Music for 18 Musicians* (1978) | Pinnacle of minimalist form — interlocking rhythmic cells, warm and hypnotic, direct influence on *Remain in Light*; not strict background minimalism but actively compositional | Pending |
 | 2026-06-20 | Can | *Tago Mago* (1971) | Pinnacle of krautrock — hypnotic locked-in grooves, drummer Jaki Liebefeld as compositional engine; direct influence on *Remain in Light*, connects to extended group improvisation (Grateful Dead) and drummer-as-composer angle (Miller, Don Caballero) | Pending |
+| 2026-06-27 | Neu! | *Neu!* (1971) | The other pillar of krautrock alongside Can; motorik pulse, hypnotic and forward-moving; connects directly to *Tago Mago* and *Remain in Light* | Pending |
+| 2026-06-27 | Miles Davis | *Bitches Brew* (1970) | Electric, labyrinthine, compositionally massive; connects to Mingus, Can, and the Grateful Dead's improvisational sprawl | Pending |
+| 2026-06-27 | Moondog | *Moondog* (1969) | Eccentric New York street musician, percussion-driven, contrapuntal, genuinely unlike anything else; connects to Bach, Reich, and compositional rigor in unexpected places | Pending |
+| 2026-06-27 | Stereolab | *Emperor Tomato Ketchup* (1995) | Krautrock pulse meets French pop sensibility; connects to Can, Tortoise, Cibo Matto | Pending |
+| 2026-06-27 | Henry Cow | *Unrest* (1974) | British avant-prog, rigorous and strange; somewhere between Slint, Mingus, and Zappa | Pending |
