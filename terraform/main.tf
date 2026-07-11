@@ -68,7 +68,8 @@ resource "aws_lambda_function" "app" {
   role             = aws_iam_role.lambda.arn
   handler          = "index.handler"
   runtime          = "nodejs22.x"
-  timeout          = 30
+  timeout          = 120
+  memory_size      = 256
 
   environment {
     variables = {
@@ -78,6 +79,24 @@ resource "aws_lambda_function" "app" {
       GITHUB_REPO       = var.github_repo
     }
   }
+}
+
+# ── Function URL ─────────────────────────────────────────────────────────────
+# Direct Lambda endpoint. Unlike the API Gateway HTTP API (hard 30s integration
+# timeout), a Function URL honors the Lambda's own timeout, so long chat/commit
+# requests no longer get cut off with a 503.
+
+resource "aws_lambda_function_url" "app" {
+  function_name      = aws_lambda_function.app.function_name
+  authorization_type = "NONE"
+}
+
+resource "aws_lambda_permission" "function_url" {
+  statement_id           = "FunctionURLAllowPublicAccess"
+  action                 = "lambda:InvokeFunctionUrl"
+  function_name          = aws_lambda_function.app.function_name
+  principal              = "*"
+  function_url_auth_type = "NONE"
 }
 
 # ── API Gateway ────────────────────────────────────────────────────────────────
