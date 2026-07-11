@@ -4,7 +4,7 @@
 |------|--------|-------|-------|---------|
 | 2026-06-20 | Allison Miller's Boom Tic Boom | *Boom Tic Boom* | Drummer-led compositional jazz — Miller is the leader/composer; has enjoyed two of the band's albums. Bad Plus / Brandon Seabrook adjacency (drummer as composer, strong group interplay) | Likes it |
 | 2026-04-24 | Milton Nascimento & Lô Borges | *Clube da Esquina* (1972) | Pinnacle of Brazilian popular music; harmonically sophisticated (connects to Ravel/Debussy), wide-ranging double album | Want to listen |
-| 2026-04-24 | Bruno Pernadas | *Those Who Throw Objects at the Crocodiles Will Be Asked to Retrieve Them* (2016) | Heard "Galaxy" and liked it — lush jazzy psych-pop; want to hear the rest of the album | Want to listen |
+| 2026-04-24 | Bruno Pernadas | *Those Who Throw Objects at the Crocodiles Will Be Asked to Retrieve Them* (2016) | Heard "Galaxy" and liked it — lush jazzy psych-pop; want to hear the rest of the album | Good — wants to keep returning to it |
 | 2026-04-23 | Bread | *Manna* (1971) | Soft rock but with real craft; less polished than their bigger albums, more varied arrangements | Nice but not totally for me |
 | 2026-04-23 | Kelly Moran | *Don't Trust Mirrors* | Prepared piano; not usually a minimalism person but this works — rich timbres keep it from feeling austere | Enjoying |
 | 2026-04-23 | Brandon Seabrook | | Chaotic string work, acoustic instruments pushed into unexpected territory; followed up after seeing him solo at the Icehouse 2024-10-14 (see `concerts.md`) | Enjoying |
