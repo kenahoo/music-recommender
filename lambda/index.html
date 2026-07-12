@@ -59,8 +59,9 @@ header h1 { font-size: 1.1rem; }
 #log-resize:hover { background: #4a90d9; }
 #log-backdrop { position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 150; opacity: 0; pointer-events: none; transition: opacity 0.2s; }
 #log-backdrop.open { opacity: 1; pointer-events: auto; }
-#log-panel { position: fixed; top: 0; left: 0; bottom: 0; width: min(560px, 88vw); background: #1e1e1e; border-right: 1px solid #3a3a3a; z-index: 160; transform: translateX(-100%); transition: transform 0.2s ease; display: flex; flex-direction: column; }
+#log-panel { position: fixed; top: 0; left: 0; bottom: 0; width: 66vw; background: #1e1e1e; border-right: 1px solid #3a3a3a; z-index: 160; transform: translateX(-100%); transition: transform 0.2s ease; display: flex; flex-direction: column; }
 #log-panel.open { transform: translateX(0); }
+@media (max-width: 640px) { #log-panel { width: 90vw; } }
 #log-panel-header { display: flex; justify-content: space-between; align-items: center; padding: 0.9rem 1.25rem; border-bottom: 1px solid #3a3a3a; flex-shrink: 0; }
 #log-panel-header span { font-size: 0.85rem; color: #aaa; font-family: monospace; }
 #log-close { background: none; border: none; color: #aaa; font-size: 1.5rem; line-height: 1; cursor: pointer; padding: 0 0.25rem; }
