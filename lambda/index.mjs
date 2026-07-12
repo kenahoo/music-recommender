@@ -70,23 +70,28 @@ async function commitFile(path, content, message) {
   }
 }
 
+// Proper LCS-based line diff so the shown +/- lines actually reflect the change
+// (the old set-based version mishandled moved/duplicate lines and could report
+// "no diff" for a real change).
 function lineDiff(oldText, newText) {
-  const oldLines = oldText.split('\n');
-  const newLines = newText.split('\n');
-  const removed = new Set();
-  const added = new Set();
-
-  // Mark lines removed from old that aren't in new
-  for (let i = 0; i < oldLines.length; i++) {
-    if (!newLines.includes(oldLines[i])) removed.add(i);
+  const a = oldText.split('\n');
+  const b = newText.split('\n');
+  const m = a.length, n = b.length;
+  const dp = Array.from({ length: m + 1 }, () => new Array(n + 1).fill(0));
+  for (let i = m - 1; i >= 0; i--) {
+    for (let j = n - 1; j >= 0; j--) {
+      dp[i][j] = a[i] === b[j] ? dp[i + 1][j + 1] + 1 : Math.max(dp[i + 1][j], dp[i][j + 1]);
+    }
   }
   const result = [];
-  for (let i = 0; i < oldLines.length; i++) {
-    if (removed.has(i)) result.push(`- ${oldLines[i]}`);
+  let i = 0, j = 0;
+  while (i < m && j < n) {
+    if (a[i] === b[j]) { i++; j++; }
+    else if (dp[i + 1][j] >= dp[i][j + 1]) { result.push(`- ${a[i]}`); i++; }
+    else { result.push(`+ ${b[j]}`); j++; }
   }
-  for (let i = 0; i < newLines.length; i++) {
-    if (!oldLines.includes(newLines[i])) result.push(`+ ${newLines[i]}`);
-  }
+  while (i < m) result.push(`- ${a[i++]}`);
+  while (j < n) result.push(`+ ${b[j++]}`);
   return result.length ? result.join('\n') : '(no textual diff detected)';
 }
 
