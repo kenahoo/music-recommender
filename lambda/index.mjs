@@ -113,7 +113,7 @@ function json(statusCode, body) {
 
 const UPDATE_PROTOCOL = `## How updates work
 
-The "Current Recommendations Log" below is the live, saved contents of recommendations.md. Always trust it as the source of truth over anything earlier in the conversation.
+The "Current Listening Log" below is the live, saved contents of listening-log.md. Always trust it as the source of truth over anything earlier in the conversation.
 
 To log a listen, add an entry, change a verdict, or make ANY edit to the log, you MUST call the propose_update tool with the complete updated file. That is the only way the file can change. Never say you have logged, added, updated, saved, or committed anything unless you actually called propose_update in that same reply. After you call it, the user reviews the diff and confirms the commit — you never commit yourself. If a change you proposed earlier is not reflected in the log below, it was not saved; propose it again.
 
@@ -122,13 +122,13 @@ Before proposing an update, check whether the log below already reflects what th
 const tools = [
   {
     name: 'propose_update',
-    description: 'Propose changes to recommendations.md. Call this when the user wants to update verdicts, add entries, or make any other edit. This does NOT commit immediately — the user will be shown the diff and asked to confirm before anything is saved.',
+    description: 'Propose changes to listening-log.md. Call this when the user wants to update verdicts, add entries, or make any other edit. This does NOT commit immediately — the user will be shown the diff and asked to confirm before anything is saved.',
     input_schema: {
       type: 'object',
       properties: {
         new_content: {
           type: 'string',
-          description: 'The complete proposed new content of recommendations.md',
+          description: 'The complete proposed new content of listening-log.md',
         },
         commit_message: {
           type: 'string',
@@ -171,7 +171,7 @@ export const handler = async (event, context) => {
     const { newContent, commitMessage } = body;
     if (!newContent) return json(400, { error: 'newContent is required' });
     try {
-      await commitFile('recommendations.md', newContent, commitMessage || 'Update recommendations');
+      await commitFile('listening-log.md', newContent, commitMessage || 'Update listening log');
       return json(200, { success: true });
     } catch (err) {
       return json(502, { error: err.message, logUrl: streamLogUrl(context) });
@@ -182,10 +182,10 @@ export const handler = async (event, context) => {
     try {
       const [claudeMd, recsMd] = await Promise.all([
         getFile('CLAUDE.md'),
-        getFile('recommendations.md'),
+        getFile('listening-log.md'),
       ]);
 
-      const systemPrompt = `${claudeMd.content}\n\n${UPDATE_PROTOCOL}\n\n## Current Recommendations Log\n\n${recsMd.content}`;
+      const systemPrompt = `${claudeMd.content}\n\n${UPDATE_PROTOCOL}\n\n## Current Listening Log\n\n${recsMd.content}`;
       const msgs = [...body.messages];
 
       // On a clean proposal we return immediately (no extra confirmation call —

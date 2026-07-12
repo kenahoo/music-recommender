@@ -21,4 +21,4 @@
 - Listens to full albums at a time — don't call out individual tracks
 
 ## Listening log
-See `recommendations.md`
+See `listening-log.md`
