@@ -7,7 +7,7 @@
 | 2026-04-24 | Bruno Pernadas | *Those Who Throw Objects at the Crocodiles Will Be Asked to Retrieve Them* (2016) | Heard "Galaxy" and liked it — lush jazzy psych-pop; want to hear the rest of the album | Good — wants to keep returning to it |
 | 2026-04-23 | Bread | *Manna* (1971) | Soft rock but with real craft; less polished than their bigger albums, more varied arrangements | Nice but not totally for me |
 | 2026-04-23 | Kelly Moran | *Don't Trust Mirrors* | Prepared piano; not usually a minimalism person but this works — rich timbres keep it from feeling austere | Enjoying |
-| 2026-04-23 | Brandon Seabrook | | Chaotic string work, acoustic instruments pushed into unexpected territory; followed up after seeing him solo at the Icehouse 2024-10-14 (see `concerts.md`) | Enjoying |
+| 2026-04-23 | Brandon Seabrook | | Chaotic string work, acoustic instruments pushed into unexpected territory; followed up after seeing him solo at the Icehouse 2024-10-14 (see "Concerts") | Enjoying |
 | 2026-03-18 | Slint | *Spiderland* (1991) | Intricate interlocking guitars, minimal and precise, pinnacle of indie/post-rock | Favorable |
 | 2026-03-15 | Television | *Marquee Moon* (1977) | Bach-like guitar counterpoint, DIY spirit, considered a pinnacle of guitar rock | Favorable |
 | 2026-03-15 | Love | *Forever Changes* (1967) | Orchestrated folk-rock, sophisticated arrangements, considered an overlooked pinnacle of the 60s | Not crazy about it |
@@ -30,3 +30,12 @@
 | 2026-06-27 | Moondog | *Moondog* (1969) | Eccentric New York street musician, percussion-driven, contrapuntal, genuinely unlike anything else; connects to Bach, Reich, and compositional rigor in unexpected places | Pending |
 | 2026-06-27 | Stereolab | *Emperor Tomato Ketchup* (1995) | Krautrock pulse meets French pop sensibility; connects to Can, Tortoise, Cibo Matto | Pending |
 | 2026-06-27 | Henry Cow | *Unrest* (1974) | British avant-prog, rigorous and strange; somewhere between Slint, Mingus, and Zappa | Pending |
+
+
+# Concert Log
+
+Shows I've attended.
+
+| Date | Venue | Artists | Notes |
+|------|-------|---------|-------|
+| 2024-10-14 | Icehouse (Minneapolis) | Brandon Seabrook; Erik Fratzke | Each played a solo set. Seabrook = NYC avant-garde guitar/banjo; Fratzke = Minneapolis bass (Happy Apple / Zebulon Pike, Dave King / Bad Plus orbit). Prompted my April 2026 follow-up listening to Seabrook. |
