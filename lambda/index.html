@@ -53,7 +53,10 @@ header h1 { font-size: 1.1rem; }
 #pending-bar.committed #pending-label { color: #7ee0a0; }
 #pending-bar.committed #confirm-btn, #pending-bar.committed #cancel-pending-btn { display: none; }
 
-#log-toggle { padding: 0.35rem 0.75rem; background: #3a3a3a; border: 1px solid #555; color: #e0e0e0; border-radius: 4px; cursor: pointer; font-size: 0.85rem; }
+#log-tab { position: fixed; left: 0; top: 50%; transform: translateY(-50%); z-index: 140; writing-mode: vertical-rl; background: #3a3a3a; color: #e0e0e0; border: 1px solid #555; border-left: none; border-radius: 0 6px 6px 0; padding: 0.9rem 0.35rem; cursor: pointer; font-size: 0.8rem; letter-spacing: 0.03em; user-select: none; }
+#log-tab:hover { background: #454545; }
+#log-resize { position: absolute; top: 0; right: 0; bottom: 0; width: 6px; cursor: ew-resize; }
+#log-resize:hover { background: #4a90d9; }
 #log-backdrop { position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 150; opacity: 0; pointer-events: none; transition: opacity 0.2s; }
 #log-backdrop.open { opacity: 1; pointer-events: auto; }
 #log-panel { position: fixed; top: 0; left: 0; bottom: 0; width: min(560px, 88vw); background: #1e1e1e; border-right: 1px solid #3a3a3a; z-index: 160; transform: translateX(-100%); transition: transform 0.2s ease; display: flex; flex-direction: column; }
@@ -70,6 +73,9 @@ header h1 { font-size: 1.1rem; }
 #log-content a { color: #6ab0f3; }
 #log-content code { background: #2a2a2a; padding: 0.1em 0.3em; border-radius: 3px; font-size: 0.9em; }
 #log-content hr { border: none; border-top: 1px solid #3a3a3a; margin: 1em 0; }
+#log-content table { border-collapse: collapse; width: 100%; margin: 0.6em 0; }
+#log-content th, #log-content td { border: 1px solid #d9863f; padding: 0.35em 0.6em; text-align: left; vertical-align: top; }
+#log-content th { background: rgba(217, 134, 63, 0.12); }
 </style>
 </head>
 <body>
@@ -85,10 +91,7 @@ header h1 { font-size: 1.1rem; }
 
 <div id="app">
   <header>
-    <div style="display:flex;gap:0.75rem;align-items:center;">
-      <button id="log-toggle">Listening Log</button>
-      <h1>Music Advisor</h1>
-    </div>
+    <h1>Music Advisor</h1>
     <div style="display:flex;gap:1rem;align-items:center;">
       <a id="logs-link" href="#" target="_blank" rel="noopener"
          style="color:#aaa;font-size:0.85rem;text-decoration:none;">Logs</a>
@@ -96,6 +99,7 @@ header h1 { font-size: 1.1rem; }
          style="color:#aaa;font-size:0.85rem;text-decoration:none;">GitHub</a>
     </div>
   </header>
+  <div id="log-tab" title="Open listening log">Listening Log</div>
   <div id="log-backdrop"></div>
   <div id="log-panel">
     <div id="log-panel-header">
@@ -103,6 +107,7 @@ header h1 { font-size: 1.1rem; }
       <button id="log-close" title="Close">&times;</button>
     </div>
     <div id="log-content"></div>
+    <div id="log-resize" title="Drag to resize"></div>
   </div>
   <div id="messages"></div>
   <div id="pending-bar">
@@ -292,11 +297,31 @@ const logPanel = document.getElementById('log-panel');
 const logBackdrop = document.getElementById('log-backdrop');
 const logContent = document.getElementById('log-content');
 
-document.getElementById('log-toggle').addEventListener('click', openLog);
+document.getElementById('log-tab').addEventListener('click', openLog);
 document.getElementById('log-close').addEventListener('click', closeLog);
 logBackdrop.addEventListener('click', closeLog);
 document.addEventListener('keydown', e => {
   if (e.key === 'Escape' && logPanel.classList.contains('open')) closeLog();
+});
+
+// Drag the right edge to resize the panel.
+let logResizing = false;
+document.getElementById('log-resize').addEventListener('mousedown', e => {
+  logResizing = true;
+  document.body.style.userSelect = 'none';
+  document.body.style.cursor = 'ew-resize';
+  e.preventDefault();
+});
+document.addEventListener('mousemove', e => {
+  if (!logResizing) return;
+  const w = Math.min(Math.max(e.clientX, 320), window.innerWidth * 0.95);
+  logPanel.style.width = w + 'px';
+});
+document.addEventListener('mouseup', () => {
+  if (!logResizing) return;
+  logResizing = false;
+  document.body.style.userSelect = '';
+  document.body.style.cursor = '';
 });
 
 async function openLog() {
