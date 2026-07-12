@@ -115,7 +115,9 @@ const UPDATE_PROTOCOL = `## How updates work
 
 The "Current Recommendations Log" below is the live, saved contents of recommendations.md. Always trust it as the source of truth over anything earlier in the conversation.
 
-To log a listen, add an entry, change a verdict, or make ANY edit to the log, you MUST call the propose_update tool with the complete updated file. That is the only way the file can change. Never say you have logged, added, updated, saved, or committed anything unless you actually called propose_update in that same reply. After you call it, the user reviews the diff and confirms the commit — you never commit yourself. If a change you proposed earlier is not reflected in the log below, it was not saved; propose it again.`;
+To log a listen, add an entry, change a verdict, or make ANY edit to the log, you MUST call the propose_update tool with the complete updated file. That is the only way the file can change. Never say you have logged, added, updated, saved, or committed anything unless you actually called propose_update in that same reply. After you call it, the user reviews the diff and confirms the commit — you never commit yourself. If a change you proposed earlier is not reflected in the log below, it was not saved; propose it again.
+
+Before proposing an update, check whether the log below already reflects what the user is asking for. Note that many entries are keyed by artist, not album title. If the log already says what they want, just tell them that — do not propose content identical to the current file.`;
 
 const tools = [
   {
@@ -184,37 +186,66 @@ export const handler = async (event, context) => {
       ]);
 
       const systemPrompt = `${claudeMd.content}\n\n${UPDATE_PROTOCOL}\n\n## Current Recommendations Log\n\n${recsMd.content}`;
+      const msgs = [...body.messages];
 
-      const response = await client.messages.create({
-        model: 'claude-sonnet-4-6',
-        max_tokens: 4096,
-        system: systemPrompt,
-        messages: body.messages,
-        tools,
-      });
+      // On a clean proposal we return immediately (no extra confirmation call —
+      // the diff is shown in the pending bar). If the model proposes a no-op or an
+      // otherwise invalid change, feed the problem back so it can self-correct or
+      // explain to the user, bounded to a few attempts.
+      for (let attempt = 0; attempt < 3; attempt++) {
+        const response = await client.messages.create({
+          model: 'claude-sonnet-4-6',
+          max_tokens: 4096,
+          system: systemPrompt,
+          messages: msgs,
+          tools,
+        });
 
-      const text = response.content.find(b => b.type === 'text');
-      const toolBlock = response.content.find(
-        b => b.type === 'tool_use' && b.name === 'propose_update'
-      );
+        const text = response.content.find(b => b.type === 'text');
+        const toolUses = response.content.filter(b => b.type === 'tool_use');
 
-      // When the model proposes an update we return the diff immediately rather
-      // than making a second Claude call for a confirmation message — the diff is
-      // shown in the pending bar, and the extra round-trip was the main cause of
-      // requests exceeding the timeout.
-      let pending = null;
-      if (toolBlock) {
-        pending = {
-          newContent: toolBlock.input.new_content,
-          commitMessage: toolBlock.input.commit_message,
-          diff: lineDiff(recsMd.content, toolBlock.input.new_content),
-        };
+        if (toolUses.length === 0) {
+          return json(200, { content: text?.text?.trim() || '', pending: null });
+        }
+
+        const results = [];
+        let pending = null;
+        for (const block of toolUses) {
+          if (block.name !== 'propose_update') {
+            results.push({ type: 'tool_result', tool_use_id: block.id, is_error: true, content: `Unknown tool: ${block.name}` });
+            continue;
+          }
+          const newContent = block.input.new_content ?? '';
+          if (newContent === recsMd.content) {
+            results.push({
+              type: 'tool_result',
+              tool_use_id: block.id,
+              is_error: true,
+              content: 'Your proposed content is identical to the current file, so there is nothing to commit. If the log already reflects what the user asked for, tell them that instead of proposing an update; otherwise make the actual edit.',
+            });
+            continue;
+          }
+          pending = {
+            newContent,
+            commitMessage: block.input.commit_message,
+            diff: lineDiff(recsMd.content, newContent),
+          };
+          results.push({ type: 'tool_result', tool_use_id: block.id, content: 'Prepared and shown to the user for confirmation.' });
+        }
+
+        if (pending) {
+          const content = text?.text?.trim()
+            || 'I’ve prepared the change below — review the diff and hit Commit to save it.';
+          return json(200, { content, pending });
+        }
+
+        // Every tool call was a no-op or error — let the model correct itself or
+        // respond to the user on the next turn.
+        msgs.push({ role: 'assistant', content: response.content });
+        msgs.push({ role: 'user', content: results });
       }
 
-      const content = text?.text?.trim()
-        || (pending ? 'I’ve prepared the change below — review the diff and hit Commit to save it.' : '');
-
-      return json(200, { content, pending });
+      return json(200, { content: 'That already looks logged the way you described, so there’s nothing to change.', pending: null });
     } catch (err) {
       console.error('Chat error:', err.message);
       return json(502, { error: err.message || 'Claude API error', logUrl: streamLogUrl(context) });
