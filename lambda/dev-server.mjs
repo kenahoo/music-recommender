@@ -14,6 +14,7 @@
 
 import { createServer } from 'http';
 import { readFileSync } from 'fs';
+import { networkInterfaces } from 'os';
 
 loadEnv();
 
@@ -56,7 +57,22 @@ createServer(async (req, res) => {
     res.writeHead(500, { 'Content-Type': 'application/json' });
     res.end(JSON.stringify({ error: err.message }));
   }
-}).listen(PORT, () => console.log(`Music Advisor (local) → http://localhost:${PORT}`));
+}).listen(PORT, () => {
+  console.log('Music Advisor (local):');
+  console.log(`  → http://localhost:${PORT}`);
+  const ip = lanIP();
+  if (ip) console.log(`  → http://${ip}:${PORT}   (same LAN — e.g. your phone)`);
+});
+
+// First non-internal IPv4 address (usually your Wi-Fi/LAN IP).
+function lanIP() {
+  for (const iface of Object.values(networkInterfaces())) {
+    for (const net of iface || []) {
+      if (!net.internal && (net.family === 'IPv4' || net.family === 4)) return net.address;
+    }
+  }
+  return null;
+}
 
 // Populate process.env from the environment, falling back to terraform.tfvars.
 function loadEnv() {
