@@ -55,7 +55,7 @@ data "archive_file" "lambda" {
   type        = "zip"
   source_dir  = "${path.module}/../lambda"
   output_path = "${path.module}/function.zip"
-  excludes    = [".DS_Store"]
+  excludes    = [".DS_Store", "dev-server.mjs"]
   depends_on  = [null_resource.npm_install]
 }
 
