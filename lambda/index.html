@@ -52,6 +52,24 @@ header h1 { font-size: 1.1rem; }
 #pending-bar.committed { border-top-color: #52b788; }
 #pending-bar.committed #pending-label { color: #7ee0a0; }
 #pending-bar.committed #confirm-btn, #pending-bar.committed #cancel-pending-btn { display: none; }
+
+#log-toggle { padding: 0.35rem 0.75rem; background: #3a3a3a; border: 1px solid #555; color: #e0e0e0; border-radius: 4px; cursor: pointer; font-size: 0.85rem; }
+#log-backdrop { position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 150; opacity: 0; pointer-events: none; transition: opacity 0.2s; }
+#log-backdrop.open { opacity: 1; pointer-events: auto; }
+#log-panel { position: fixed; top: 0; left: 0; bottom: 0; width: min(560px, 88vw); background: #1e1e1e; border-right: 1px solid #3a3a3a; z-index: 160; transform: translateX(-100%); transition: transform 0.2s ease; display: flex; flex-direction: column; }
+#log-panel.open { transform: translateX(0); }
+#log-panel-header { display: flex; justify-content: space-between; align-items: center; padding: 0.9rem 1.25rem; border-bottom: 1px solid #3a3a3a; flex-shrink: 0; }
+#log-panel-header span { font-size: 0.85rem; color: #aaa; font-family: monospace; }
+#log-close { background: none; border: none; color: #aaa; font-size: 1.5rem; line-height: 1; cursor: pointer; padding: 0 0.25rem; }
+#log-content { padding: 1.25rem 1.5rem; overflow-y: auto; line-height: 1.55; }
+#log-content h1, #log-content h2, #log-content h3 { margin: 0.9em 0 0.4em; line-height: 1.25; }
+#log-content h1 { font-size: 1.3rem; } #log-content h2 { font-size: 1.1rem; } #log-content h3 { font-size: 1rem; }
+#log-content p { margin-bottom: 0.6em; }
+#log-content ul, #log-content ol { margin: 0.4em 0 0.8em 1.4em; }
+#log-content li { margin-bottom: 0.25em; }
+#log-content a { color: #6ab0f3; }
+#log-content code { background: #2a2a2a; padding: 0.1em 0.3em; border-radius: 3px; font-size: 0.9em; }
+#log-content hr { border: none; border-top: 1px solid #3a3a3a; margin: 1em 0; }
 </style>
 </head>
 <body>
@@ -67,7 +85,10 @@ header h1 { font-size: 1.1rem; }
 
 <div id="app">
   <header>
-    <h1>Music Advisor</h1>
+    <div style="display:flex;gap:0.75rem;align-items:center;">
+      <button id="log-toggle">Listening Log</button>
+      <h1>Music Advisor</h1>
+    </div>
     <div style="display:flex;gap:1rem;align-items:center;">
       <a id="logs-link" href="#" target="_blank" rel="noopener"
          style="color:#aaa;font-size:0.85rem;text-decoration:none;">Logs</a>
@@ -75,6 +96,14 @@ header h1 { font-size: 1.1rem; }
          style="color:#aaa;font-size:0.85rem;text-decoration:none;">GitHub</a>
     </div>
   </header>
+  <div id="log-backdrop"></div>
+  <div id="log-panel">
+    <div id="log-panel-header">
+      <span>listening-log.md</span>
+      <button id="log-close" title="Close">&times;</button>
+    </div>
+    <div id="log-content"></div>
+  </div>
   <div id="messages"></div>
   <div id="pending-bar">
     <div id="pending-header">
@@ -257,6 +286,37 @@ document.getElementById('cancel-pending-btn').addEventListener('click', () => {
   messages.push({ role: 'assistant', content: 'Commit cancelled.', local: true });
   renderMessages();
 });
+
+// Listening-log drawer
+const logPanel = document.getElementById('log-panel');
+const logBackdrop = document.getElementById('log-backdrop');
+const logContent = document.getElementById('log-content');
+
+document.getElementById('log-toggle').addEventListener('click', openLog);
+document.getElementById('log-close').addEventListener('click', closeLog);
+logBackdrop.addEventListener('click', closeLog);
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape' && logPanel.classList.contains('open')) closeLog();
+});
+
+async function openLog() {
+  logPanel.classList.add('open');
+  logBackdrop.classList.add('open');
+  logContent.innerHTML = '<p style="color:#888">Loading…</p>';
+  try {
+    const res = await fetch('/api/listening-log', { headers: { 'X-App-Password': password } });
+    const data = await res.json().catch(() => ({}));
+    logContent.innerHTML = res.ok
+      ? marked.parse(data.content || '').replace(/<a /g, '<a target="_blank" rel="noopener" ')
+      : `<p style="color:#ff6b6b">Couldn’t load the log (${data.error || res.status}).</p>`;
+  } catch {
+    logContent.innerHTML = '<p style="color:#ff6b6b">Network error loading the log.</p>';
+  }
+}
+function closeLog() {
+  logPanel.classList.remove('open');
+  logBackdrop.classList.remove('open');
+}
 
 function escHtml(s) {
   return s

@@ -148,6 +148,18 @@ export const handler = async (event, context) => {
     return { statusCode: 200, headers: { 'Content-Type': 'text/html' }, body: HTML };
   }
 
+  if (method === 'GET' && path === '/api/listening-log') {
+    if (event.headers?.['x-app-password'] !== process.env.APP_PASSWORD) {
+      return json(401, { error: 'Unauthorized' });
+    }
+    try {
+      const { content } = await getFile('listening-log.md');
+      return json(200, { content });
+    } catch (err) {
+      return json(502, { error: err.message, logUrl: streamLogUrl(context) });
+    }
+  }
+
   if (method === 'POST' && path === '/api/auth') {
     let b;
     try { b = parseBody(event); } catch { return json(400, { error: 'Invalid JSON' }); }
