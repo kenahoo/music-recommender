@@ -68,8 +68,12 @@ header h1 { font-size: 1.1rem; }
 <div id="app">
   <header>
     <h1>Music Advisor</h1>
-    <a href="https://github.com/kenahoo/music-recommender" target="_blank"
-       style="color:#aaa;font-size:0.85rem;text-decoration:none;">GitHub</a>
+    <div style="display:flex;gap:1rem;align-items:center;">
+      <a id="logs-link" href="#" target="_blank" rel="noopener"
+         style="color:#aaa;font-size:0.85rem;text-decoration:none;">Logs</a>
+      <a href="https://github.com/kenahoo/music-recommender" target="_blank"
+         style="color:#aaa;font-size:0.85rem;text-decoration:none;">GitHub</a>
+    </div>
   </header>
   <div id="messages"></div>
   <div id="pending-bar">
@@ -117,6 +121,9 @@ async function tryAuth() {
     sessionStorage.setItem('pw', pw);
     const data = await res.json().catch(() => ({}));
     logGroupUrl = data.logGroupUrl || '';
+    const logsLink = document.getElementById('logs-link');
+    if (logGroupUrl) logsLink.href = logGroupUrl;
+    else logsLink.style.display = 'none';
     document.getElementById('auth-overlay').style.display = 'none';
     document.getElementById('app').style.display = 'flex';
   } else {
