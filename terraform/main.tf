@@ -2,7 +2,7 @@ terraform {
   required_providers {
     aws = {
       source  = "hashicorp/aws"
-      version = "~> 5.0"
+      version = "~> 6.0"
     }
     null = {
       source  = "hashicorp/null"
@@ -67,7 +67,7 @@ resource "aws_lambda_function" "app" {
   function_name    = var.function_name
   role             = aws_iam_role.lambda.arn
   handler          = "index.handler"
-  runtime          = "nodejs22.x"
+  runtime          = "nodejs24.x"
   timeout          = 120
   memory_size      = 256
 
