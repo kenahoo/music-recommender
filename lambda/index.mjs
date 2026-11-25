@@ -51,6 +51,32 @@ async function getFile(path) {
   };
 }
 
+// GitHub reports a PAT's expiry on every authenticated response, e.g.
+// "2027-11-24 06:00:00 UTC" or "2027-11-24 06:00:00 -0800". Convert to ISO 8601.
+function parseGithubExpiry(h) {
+  const m = h?.match(/^(\d{4}-\d{2}-\d{2}) (\d{2}:\d{2}:\d{2}) (UTC|[+-]\d{4})$/);
+  if (!m) return null;
+  const tz = m[3] === 'UTC' ? 'Z' : `${m[3].slice(0, 3)}:${m[3].slice(3)}`;
+  const d = new Date(`${m[1]}T${m[2]}${tz}`);
+  return isNaN(d) ? null : d.toISOString();
+}
+
+// Checks the token against the repo. Returns { ok, status, expiresAt } where
+// expiresAt is null for tokens without an expiry. Never throws.
+async function githubTokenStatus() {
+  try {
+    const res = await fetch(`${GITHUB_API}/repos/${REPO}`, { headers: githubHeaders() });
+    return {
+      ok: res.ok,
+      status: res.status,
+      expiresAt: parseGithubExpiry(res.headers.get('github-authentication-token-expiration')),
+    };
+  } catch (err) {
+    console.error('GitHub token check failed:', err.message);
+    return { ok: false, status: 0, expiresAt: null };
+  }
+}
+
 async function commitFile(path, content, message) {
   // Re-fetch SHA at commit time to handle any delay between proposal and confirm
   const { sha } = await getFile(path);
@@ -163,9 +189,8 @@ export const handler = async (event, context) => {
   if (method === 'POST' && path === '/api/auth') {
     let b;
     try { b = parseBody(event); } catch { return json(400, { error: 'Invalid JSON' }); }
-    return b.password === process.env.APP_PASSWORD
-      ? json(200, { ok: true, logGroupUrl: groupLogUrl() })
-      : json(401, { error: 'Unauthorized' });
+    if (b.password !== process.env.APP_PASSWORD) return json(401, { error: 'Unauthorized' });
+    return json(200, { ok: true, logGroupUrl: groupLogUrl(), githubToken: await githubTokenStatus() });
   }
 
   let body;
